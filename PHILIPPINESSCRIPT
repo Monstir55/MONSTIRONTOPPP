@@ -1,0 +1,132 @@
+-- 🐾 MonstirOnTop Pet Spawner Hub with Loading Screen
+
+print("✅ MonstirOnTop Pet Spawner Hub Loaded")
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local Players = game:GetService("Players")
+
+--// Remote Event
+local spawnEvent = ReplicatedStorage:FindFirstChild("SpawnPetEvent")
+if not spawnEvent then
+	spawnEvent = Instance.new("RemoteEvent")
+	spawnEvent.Name = "SpawnPetEvent"
+	spawnEvent.Parent = ReplicatedStorage
+end
+
+--// Server: Handle Spawn Requests
+spawnEvent.OnServerEvent:Connect(function(player, data)
+	local petName = data.PetName or "Raccoon"
+	local mutation = data.Mutation or "Normal"
+	local kg = data.Weight or math.random(10,150)
+
+	local template = ServerStorage:FindFirstChild(petName)
+	if not template then
+		warn("❌ Pet not found in ServerStorage: " .. petName)
+		return
+	end
+
+	local pet = template:Clone()
+	pet.Name = mutation .. "_" .. petName .. "_" .. kg .. "KG"
+
+	local char = player.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		local pos = char.HumanoidRootPart.CFrame * CFrame.new(math.random(-6,6),0,math.random(6,10))
+		if pet.PrimaryPart then
+			pet:SetPrimaryPartCFrame(pos)
+		else
+			pet:MoveTo(pos.Position)
+		end
+	end
+	pet.Parent = workspace
+end)
+
+--// Player UI Setup
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		local gui = Instance.new("ScreenGui")
+		gui.Name = "PetSpawnerHub"
+		gui.ResetOnSpawn = false
+		gui.Parent = player:WaitForChild("PlayerGui")
+
+		-- Loading screen
+		local loadingFrame = Instance.new("Frame", gui)
+		loadingFrame.Size = UDim2.new(1,0,1,0)
+		loadingFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+		local circle = Instance.new("ImageLabel", loadingFrame)
+		circle.Size = UDim2.new(0,100,0,100)
+		circle.Position = UDim2.new(0.5,-50,0.5,-50)
+		circle.BackgroundTransparency = 1
+		circle.Image = "rbxassetid://3926305904" -- Roblox circle asset
+		circle.ImageRectOffset = Vector2.new(4, 4)
+		circle.ImageRectSize = Vector2.new(36, 36)
+
+		local label = Instance.new("TextLabel", loadingFrame)
+		label.Text = "MonstirOnTop Loading..."
+		label.Size = UDim2.new(1,0,0,50)
+		label.Position = UDim2.new(0,0,0.7,0)
+		label.BackgroundTransparency = 1
+		label.TextColor3 = Color3.fromRGB(255,255,255)
+		label.Font = Enum.Font.SourceSansBold
+		label.TextSize = 24
+
+		-- Rotate circle
+		spawn(function()
+			while loadingFrame.Parent do
+				circle.Rotation = (circle.Rotation + 5) % 360
+				wait(0.05)
+			end
+		end)
+
+		-- After 20 sec, show hub
+		task.delay(20, function()
+			loadingFrame:Destroy()
+
+			local frame = Instance.new("Frame", gui)
+			frame.Size = UDim2.new(0,320,0,220)
+			frame.Position = UDim2.new(0.5,-160,0.5,-110)
+			frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+			frame.BorderSizePixel = 0
+
+			local title = Instance.new("TextLabel", frame)
+			title.Text = "🐾 MonstirOnTop Pet Spawner"
+			title.Size = UDim2.new(1,0,0,40)
+			title.BackgroundColor3 = Color3.fromRGB(45,45,45)
+			title.TextColor3 = Color3.fromRGB(255,255,255)
+			title.Font = Enum.Font.SourceSansBold
+			title.TextSize = 20
+
+			local petBox = Instance.new("TextBox", frame)
+			petBox.PlaceholderText = "Pet Name (Raccoon, Kitsune, Dragonfly, DiscoBee, Butterfly, QueenBee, Peacock)"
+			petBox.Size = UDim2.new(1,-20,0,30)
+			petBox.Position = UDim2.new(0,10,0,50)
+			petBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+			petBox.TextColor3 = Color3.fromRGB(255,255,255)
+
+			local mutationBox = Instance.new("TextBox", frame)
+			mutationBox.PlaceholderText = "Mutation (Mega, Shiny, Tiny, Shocked, Radiant, Ascended, Rainbow, Gold)"
+			mutationBox.Size = UDim2.new(1,-20,0,30)
+			mutationBox.Position = UDim2.new(0,10,0,90)
+			mutationBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+			mutationBox.TextColor3 = Color3.fromRGB(255,255,255)
+
+			local spawnBtn = Instance.new("TextButton", frame)
+			spawnBtn.Text = "Spawn Pet"
+			spawnBtn.Size = UDim2.new(1,-20,0,40)
+			spawnBtn.Position = UDim2.new(0,10,0,140)
+			spawnBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+			spawnBtn.TextColor3 = Color3.fromRGB(255,255,255)
+			spawnBtn.Font = Enum.Font.SourceSansBold
+			spawnBtn.TextSize = 18
+
+			spawnBtn.MouseButton1Click:Connect(function()
+				spawnEvent:FireServer({
+					PetName = petBox.Text,
+					Mutation = mutationBox.Text,
+					Weight = math.random(10,150)
+				})
+			end)
+		end)
+	end)
+end)
