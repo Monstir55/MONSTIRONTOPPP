@@ -1,0 +1,95 @@
+--// Player UI Setup
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		-- Wait for PlayerGui to exist
+		local playerGui = player:WaitForChild("PlayerGui")
+
+		local gui = Instance.new("ScreenGui")
+		gui.Name = "PetSpawnerHub"
+		gui.ResetOnSpawn = false
+		gui.IgnoreGuiInset = true
+		gui.Parent = playerGui
+
+		-- Loading screen
+		local loadingFrame = Instance.new("Frame", gui)
+		loadingFrame.Size = UDim2.new(1,0,1,0)
+		loadingFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+		local circle = Instance.new("ImageLabel", loadingFrame)
+		circle.Size = UDim2.new(0,100,0,100)
+		circle.Position = UDim2.new(0.5,-50,0.5,-50)
+		circle.BackgroundTransparency = 1
+		-- Use a circle image (system asset)
+		circle.Image = "rbxassetid://7699171316"
+
+		local label = Instance.new("TextLabel", loadingFrame)
+		label.Text = "MonstirOnTop Loading..."
+		label.Size = UDim2.new(1,0,0,50)
+		label.Position = UDim2.new(0,0,0.7,0)
+		label.BackgroundTransparency = 1
+		label.TextColor3 = Color3.fromRGB(255,255,255)
+		label.Font = Enum.Font.SourceSansBold
+		label.TextSize = 24
+
+		-- Rotate circle
+		task.spawn(function()
+			while loadingFrame.Parent do
+				circle.Rotation = (circle.Rotation + 5) % 360
+				task.wait(0.05)
+			end
+		end)
+
+		-- After 20 sec, show hub
+		task.delay(20, function()
+			if loadingFrame then
+				loadingFrame:Destroy()
+			end
+
+			-- Now show the hub UI (same code as before)
+			local frame = Instance.new("Frame", gui)
+			frame.Size = UDim2.new(0,320,0,220)
+			frame.Position = UDim2.new(0.5,-160,0.5,-110)
+			frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+			frame.BorderSizePixel = 0
+
+			local title = Instance.new("TextLabel", frame)
+			title.Text = "🐾 MonstirOnTop Pet Spawner"
+			title.Size = UDim2.new(1,0,0,40)
+			title.BackgroundColor3 = Color3.fromRGB(45,45,45)
+			title.TextColor3 = Color3.fromRGB(255,255,255)
+			title.Font = Enum.Font.SourceSansBold
+			title.TextSize = 20
+
+			local petBox = Instance.new("TextBox", frame)
+			petBox.PlaceholderText = "Pet Name (Raccoon, Kitsune, Dragonfly, DiscoBee, Butterfly, QueenBee, Peacock)"
+			petBox.Size = UDim2.new(1,-20,0,30)
+			petBox.Position = UDim2.new(0,10,0,50)
+			petBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+			petBox.TextColor3 = Color3.fromRGB(255,255,255)
+
+			local mutationBox = Instance.new("TextBox", frame)
+			mutationBox.PlaceholderText = "Mutation (Mega, Shiny, Tiny, Shocked, Radiant, Ascended, Rainbow, Gold)"
+			mutationBox.Size = UDim2.new(1,-20,0,30)
+			mutationBox.Position = UDim2.new(0,10,0,90)
+			mutationBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+			mutationBox.TextColor3 = Color3.fromRGB(255,255,255)
+
+			local spawnBtn = Instance.new("TextButton", frame)
+			spawnBtn.Text = "Spawn Pet"
+			spawnBtn.Size = UDim2.new(1,-20,0,40)
+			spawnBtn.Position = UDim2.new(0,10,0,140)
+			spawnBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+			spawnBtn.TextColor3 = Color3.fromRGB(255,255,255)
+			spawnBtn.Font = Enum.Font.SourceSansBold
+			spawnBtn.TextSize = 18
+
+			spawnBtn.MouseButton1Click:Connect(function()
+				spawnEvent:FireServer({
+					PetName = petBox.Text,
+					Mutation = mutationBox.Text,
+					Weight = math.random(10,150)
+				})
+			end)
+		end)
+	end)
+end)
